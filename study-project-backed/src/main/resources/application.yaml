@@ -1,1 +1,6 @@
-spring.application.name=study-project-backed
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3307/backed?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: 123456
