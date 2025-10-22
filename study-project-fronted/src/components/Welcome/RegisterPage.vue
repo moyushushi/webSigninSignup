@@ -1,8 +1,61 @@
 <script setup>
 import {EditPen, Lock, Message, User} from "@element-plus/icons-vue";
-import { reactive} from "vue";
+import {reactive, ref} from "vue";
 import router from "@/router/index.js";
 
+const validateUsername = (rule,value, callback) => {
+  if (!value) {
+    callback(new Error('请输入用户名'))
+  } else {
+    if (!/^[a-zA-Z0-9\u4e00-\u9fa5]+$/.test(value)) {
+      callback(new Error('用户名不能有特殊字符'))
+    }else
+      callback()
+  }
+}
+
+const validatePassword = (rule,value, callback) => {
+  if (!value) {
+    callback(new Error('密码不能为空'))
+  } else
+      callback()
+}
+
+const validatePass2 = (rule, value, callback) => {
+  if (value === '') {
+    callback(new Error('请输入第二次密码'))
+  } else if (value !== form.password) {
+    callback(new Error("两次密码不一致！"))
+  } else {
+    callback()
+  }
+}
+
+const rules = {
+  username:[
+    {validator: validateUsername, trigger: ['blur','change']},
+    {min: 3, max: 14, message: '用户名长度要大于3小于14', trigger: 'blur'}
+  ],
+  password:[
+    {validator: validatePassword, trigger: ['blur','change']},
+    {min: 3, max: 14, message: '密码长度要大于3小于14', trigger: 'blur'}
+  ],
+  password_repeat:[
+      {validator: validatePass2, trigger: ['blur','change']},
+  ],
+  email:[
+    {required:true,message:'邮箱不能为空',trigger: ['blur','change']},
+    {type: 'email', message: '请输入可用的邮箱地址', trigger: ['blur', 'change']}
+  ]
+}
+
+const isEmailValid = ref(false)
+
+const onValidate= (prop,isValid) => {
+  if (prop === 'email') {
+    isEmailValid.value = isValid;
+  }
+}
 
 const form = reactive({
   username: "",
@@ -21,29 +74,29 @@ const form = reactive({
       <div style="font-size: 14px;color: gray">欢迎注册学习平台，请填写相关信息</div>
     </div>
     <div style="margin-top: 40px">
-      <el-form>
-        <el-form-item>
+      <el-form :model="form" :rules="rules">
+        <el-form-item prop="username" @validata="onValidate">
           <el-input v-model="form.username" type="text" placeholder="用户名" style="margin-top: 10px">
             <template #prefix>
               <el-icon><User /></el-icon>
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item>
+        <el-form-item prop="password">
           <el-input v-model="form.password" type="text" placeholder="密码" >
             <template #prefix>
               <el-icon><Lock /></el-icon>
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item>
+        <el-form-item prop="password_repeat">
           <el-input v-model="form.password_repeat" type="text" placeholder="重复密码" >
             <template #prefix>
               <el-icon><Lock /></el-icon>
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item>
+        <el-form-item prop="email">
           <el-input v-model="form.email" type="text" placeholder="电子邮件">
             <template #prefix>
               <el-icon><Message /></el-icon>
@@ -60,7 +113,7 @@ const form = reactive({
               </el-input>
             </el-col>
             <el-col :span="5">
-              <el-button type="success">获取验证码</el-button>
+              <el-button type="success" :disabled="!isEmailValid">获取验证码</el-button>
             </el-col>
           </el-row>
         </el-form-item>
