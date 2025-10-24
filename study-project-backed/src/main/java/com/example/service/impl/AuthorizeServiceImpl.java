@@ -4,16 +4,34 @@ import com.example.entity.Account;
 import com.example.mapper.UserMapper;
 import com.example.service.AuthorizeService;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailSender;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 @Service
 public class AuthorizeServiceImpl implements AuthorizeService {
 
+    @Value("${spring.mail.username}")
+    String from;
+
     @Resource
     UserMapper mapper;
+
+    @Resource
+    MailSender mailSender;
+
+    @Resource
+    StringRedisTemplate template;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -29,19 +47,40 @@ public class AuthorizeServiceImpl implements AuthorizeService {
                 .roles("user")
                 .build();
     }
-
+    /*
+              1.生成验证码
+              2.放redis里 (3分钟过期,60s可发送一次)
+              3.发送到指定邮箱
+              4.失败，redis中删除
+              5.用户注册是从redis中取出，验证
+             */
     @Override
-    public boolean sendValidateEmail(String email) {
-        /*
-          1.生成验证码
-          2.放redis里 (3分钟过期,60s可发送一次)
-          3.发送到指定邮箱
-          4.失败，redis中删除
-          5.用户注册是从redis中取出，验证
-         */
+    public boolean sendValidateEmail(String email,String sessionId) {
+        String key="email:"+sessionId+":"+email;
+        if (template.hasKey(key)){
+            Long expire= Optional.of(template.getExpire(key,TimeUnit.SECONDS)).orElse(0L);
+            if (expire>120)
+                return false;
+        }
+        Random random = new Random();
+        int code= random.nextInt(899999)+100000;
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(from);
+        message.setTo(email);
+        message.setSubject("邮箱验证");
+        message.setText("验证码是："+code);
+        try {
+            mailSender.send(message);
+
+            template.opsForValue().set(key,String.valueOf(code),3, TimeUnit.MINUTES);
+            return true;
+        }catch (MailException e){
+            e.printStackTrace();
+            return false;
+        }
 
 
 
-        return false;
+
     }
 }

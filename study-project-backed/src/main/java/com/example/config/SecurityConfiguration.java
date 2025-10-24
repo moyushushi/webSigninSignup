@@ -40,7 +40,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain FilterChain(HttpSecurity http,PersistentTokenRepository repository) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login","/","/css/**","/js/**").permitAll()
+                        .requestMatchers("/login","/","/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(withDefaults())

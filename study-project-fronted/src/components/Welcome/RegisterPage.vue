@@ -3,6 +3,7 @@ import {EditPen, Lock, Message, User} from "@element-plus/icons-vue";
 import {reactive, ref} from "vue";
 import router from "@/router/index.js";
 import {ElMessage} from "element-plus";
+import {post} from "@/net/index.js";
 
 const validateUsername = (rule,value, callback) => {
   if (!value) {
@@ -70,6 +71,14 @@ const register = () => {
   })
 }
 
+const validateEmail = () => {
+  post("/vali-email",{
+    email: form.email
+  },(message)=>{
+    ElMessage.success(message)
+  })
+}
+
 const form = reactive({
   username: "",
   password: "",
@@ -126,7 +135,7 @@ const form = reactive({
               </el-input>
             </el-col>
             <el-col :span="5">
-              <el-button type="success" :disabled="!isEmailValid">获取验证码</el-button>
+              <el-button type="success" :disabled="!isEmailValid" @click="validateEmail">获取验证码</el-button>
             </el-col>
           </el-row>
         </el-form-item>
