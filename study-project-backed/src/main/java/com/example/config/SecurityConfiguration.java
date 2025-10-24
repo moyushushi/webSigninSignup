@@ -110,7 +110,7 @@ public class SecurityConfiguration {
 
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(JSONObject.toJSONString(RestBean.failure(401)));
+        response.getWriter().write(JSONObject.toJSONString(RestBean.failure(401,"出错，联系管理员")));
     }
 
 }
