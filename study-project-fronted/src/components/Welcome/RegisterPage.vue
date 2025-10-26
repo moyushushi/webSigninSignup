@@ -65,7 +65,15 @@ const onValidate= (prop,isValid) => {
 const register = () => {
   formRef.value.validate((isValid)=>{
     if (isValid) {
-      ElMessage.success()
+      post('/register', {
+        username: form.username,
+        password: form.password,
+        email: form.email,
+        code: form.code,
+      }, (message) => {
+        ElMessage.success(message);
+        router.push('/');
+      })
     }else
       ElMessage.warning('请完整填写信息')
   })
@@ -98,21 +106,21 @@ const form = reactive({
     <div style="margin-top: 40px">
       <el-form :model="form" :rules="rules" ref="formRef" @validate="onValidate">
         <el-form-item prop="username" >
-          <el-input v-model="form.username" type="text" placeholder="用户名" style="margin-top: 10px">
+          <el-input v-model="form.username" :maxlength="14" type="text" placeholder="用户名" style="margin-top: 10px">
             <template #prefix>
               <el-icon><User /></el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="form.password" type="password" placeholder="密码" >
+          <el-input v-model="form.password" :maxlength="14" type="password" placeholder="密码" >
             <template #prefix>
               <el-icon><Lock /></el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item prop="password_repeat">
-          <el-input v-model="form.password_repeat" type="password" placeholder="重复密码" >
+          <el-input v-model="form.password_repeat" :maxlength="14" type="password" placeholder="重复密码" >
             <template #prefix>
               <el-icon><Lock /></el-icon>
             </template>
@@ -128,7 +136,7 @@ const form = reactive({
         <el-form-item prop="code">
           <el-row gutter="10" style="width: 100%">
             <el-col :span="17" >
-              <el-input v-model="form.code" type="text" placeholder="请输入邮件验证码">
+              <el-input v-model="form.code" :maxlength="6" type="text" placeholder="请输入邮件验证码">
                 <template #prefix>
                   <el-icon><EditPen /></el-icon>
                 </template>
