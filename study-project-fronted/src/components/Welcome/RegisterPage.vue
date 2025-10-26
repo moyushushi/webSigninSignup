@@ -56,6 +56,8 @@ const rules = {
 
 const isEmailValid = ref(false)
 const formRef = ref()
+const coldTime =ref(0)
+
 const onValidate= (prop,isValid) => {
   if (prop === 'email') {
     isEmailValid.value = isValid;
@@ -84,6 +86,8 @@ const validateEmail = () => {
     email: form.email
   },(message)=>{
     ElMessage.success(message)
+    coldTime.value = 60;
+    setInterval(()=>coldTime.value--,1000);
   })
 }
 
@@ -143,7 +147,9 @@ const form = reactive({
               </el-input>
             </el-col>
             <el-col :span="5">
-              <el-button type="success" :disabled="!isEmailValid" @click="validateEmail">获取验证码</el-button>
+              <el-button type="success" :disabled="!isEmailValid ||coldTime>0" @click="validateEmail">
+                {{coldTime>0 ? '请稍后' + coldTime +"秒" : '获取验证码'}}
+              </el-button>
             </el-col>
           </el-row>
         </el-form-item>

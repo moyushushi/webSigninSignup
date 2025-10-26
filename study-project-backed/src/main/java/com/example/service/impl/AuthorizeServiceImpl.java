@@ -80,9 +80,8 @@ public class AuthorizeServiceImpl implements AuthorizeService {
         message.setText("验证码是："+code);
         try {
             mailSender.send(message);
-
             template.opsForValue().set(key,String.valueOf(code),3, TimeUnit.MINUTES);
-            return "发送成功！";
+            return null;
         }catch (MailException e){
             e.printStackTrace();
             return "邮件发送失败，请检查邮箱地址是否正确或联系管理员";
