@@ -1,7 +1,7 @@
 <script setup>
 import {ElMessage} from 'element-plus';
 import router from "@/router/index.js";
-import {get,} from "@/net/index.js";
+import {get} from "@/net/index.js";
 
 const logout=() =>{
   get("/my/logout",(message) =>{
