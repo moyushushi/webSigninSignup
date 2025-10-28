@@ -82,7 +82,7 @@ const register = () => {
 }
 
 const validateEmail = () => {
-  post("/vali-email",{
+  post("/vali-register-email",{
     email: form.email
   },(message)=>{
     ElMessage.success(message)

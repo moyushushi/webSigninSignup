@@ -61,16 +61,17 @@ public class AuthorizeServiceImpl implements AuthorizeService {
               5.用户注册是从redis中取出，验证
              */
     @Override
-    public String sendValidateEmail(String email,String sessionId) {
-        String key = "email:verify:" + email;
+    public String sendValidateEmail(String email,String sessionId,boolean hasAccount) {
+        String key = "email:verify:" +email+":"+hasAccount;
+        System.out.println("【sendValidateEmail】key = " + key);
         if (template.hasKey(key)){
             Long expire= Optional.of(template.getExpire(key,TimeUnit.SECONDS)).orElse(0L);
             if (expire>120)
                 return "请求频繁，请稍后再试";
         }
-        if (mapper.findAccountByNameOrEmail(email) != null){
-            return "此邮箱已被其他用户注册";
-        }
+        Account account = mapper.findAccountByNameOrEmail(email);
+        if (account == null && hasAccount)return "没有此邮件地址的账户";
+        if (account != null&& !hasAccount) return "此邮箱已被其他用户注册";
         Random random = new Random();
         int code= random.nextInt(899999)+100000;
         SimpleMailMessage message = new SimpleMailMessage();
@@ -90,12 +91,13 @@ public class AuthorizeServiceImpl implements AuthorizeService {
 
     @Override
     public String validateAndRegister(String username, String password, String email, String code, String sessionId) {
-        String key = "email:verify:" + email;
+        String key = "email:verify:" + email+":true";
         if(template.hasKey(key)){
             String s= template.opsForValue().get(key);
             if (s==null) return "验证码失效";
             if (code != null && code.equals(s)){
                 password = encoder.encode(password);
+                template.delete(key);
                 if(mapper.createAccount(username,password,email)>0){
                     return null;
                 }else return "内部错误，联系管理员";
@@ -104,5 +106,27 @@ public class AuthorizeServiceImpl implements AuthorizeService {
         }else {
             return "请先完成邮箱验证！";
         }
+    }
+
+    @Override
+    public String validateOnly(String email, String code, String sessionId) {
+        String key = "email:verify:" + email+":true";
+        System.out.println("【validateOnly】key = " + key + ", exists = " + template.hasKey(key));
+        if(template.hasKey(key)) {
+            String s = template.opsForValue().get(key);
+            if (s == null) return "验证码失效";
+            if (code != null && code.equals(s)) {
+                template.delete(key);
+                return null;
+            } else return "验证码错误";
+        }else {
+            return "请先完成邮箱验证！";
+        }
+    }
+
+    @Override
+    public boolean resetPassword(String email ,String password) {
+        password = encoder.encode(password);
+        return mapper.setPasswordByEmail(password,email)>0;
     }
 }
