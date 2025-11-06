@@ -1,6 +1,6 @@
 package com.example.service.impl;
 
-import com.example.entity.Account;
+import com.example.entity.auth.Account;
 import com.example.mapper.UserMapper;
 import com.example.service.AuthorizeService;
 import jakarta.annotation.Resource;
@@ -91,13 +91,15 @@ public class AuthorizeServiceImpl implements AuthorizeService {
 
     @Override
     public String validateAndRegister(String username, String password, String email, String code, String sessionId) {
-        String key = "email:verify:" + email+":true";
+        String key = "email:verify:" + email+":false";
         if(template.hasKey(key)){
             String s= template.opsForValue().get(key);
             if (s==null) return "验证码失效";
             if (code != null && code.equals(s)){
+                Account account=mapper.findAccountByNameOrEmail(username);
                 password = encoder.encode(password);
                 template.delete(key);
+                if (account != null)return "此用户名已被注册!";
                 if(mapper.createAccount(username,password,email)>0){
                     return null;
                 }else return "内部错误，联系管理员";
@@ -111,7 +113,6 @@ public class AuthorizeServiceImpl implements AuthorizeService {
     @Override
     public String validateOnly(String email, String code, String sessionId) {
         String key = "email:verify:" + email+":true";
-        System.out.println("【validateOnly】key = " + key + ", exists = " + template.hasKey(key));
         if(template.hasKey(key)) {
             String s = template.opsForValue().get(key);
             if (s == null) return "验证码失效";
