@@ -2,10 +2,12 @@
 import {ElMessage} from 'element-plus';
 import router from "@/router/index.js";
 import {get} from "@/net/index.js";
-
+import {useStore} from "@/stores/index.js";
+const store = useStore()
 const logout=() =>{
   get("/my/logout",(message) =>{
     ElMessage.success(message)
+    store.auth.user=null
     router.push('/');
   })
 }
