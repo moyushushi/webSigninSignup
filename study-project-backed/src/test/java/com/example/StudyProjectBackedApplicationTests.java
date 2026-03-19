@@ -7,10 +7,5 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @SpringBootTest
 class StudyProjectBackedApplicationTests {
 
-    @Test
-    void contextLoads() {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        System.out.println(encoder.encode("123456"));
-    }
 
 }

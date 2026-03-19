@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3307/backed?useUnicode=true&characterEncoding=utf-8
+    url: jdbc:mysql://172.26.30.75:3306/backed?useUnicode=true&characterEncoding=utf-8
     username: root
     password: 123456
   mail:
