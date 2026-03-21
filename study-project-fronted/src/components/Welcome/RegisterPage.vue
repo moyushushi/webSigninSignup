@@ -3,7 +3,9 @@ import {EditPen, Lock, Message, User} from "@element-plus/icons-vue";
 import {reactive, ref} from "vue";
 import router from "@/router/index.js";
 import {ElMessage} from "element-plus";
-import {post} from "@/net/index.js";
+import request from "@/util/request.js";
+
+let timer = null;
 
 const validateUsername = (rule,value, callback) => {
   if (!value) {
@@ -64,32 +66,73 @@ const onValidate= (prop,isValid) => {
   }
 }
 
-const register = () => {
-  formRef.value.validate((isValid)=>{
+const register = async () => {
+  // 表单验证（Element Plus 的 validate 是异步的，但这里用回调没问题）
+  formRef.value.validate(async (isValid) => {
     if (isValid) {
-      post('/register', {
-        username: form.username,
-        password: form.password,
-        email: form.email,
-        code: form.code,
-      }, (message) => {
-        ElMessage.success(message);
-        router.push('/');
-      })
-    }else
-      ElMessage.warning('请完整填写信息')
-  })
-}
+      try {
+        const res = await request.post('/register', {
+          username: form.username,
+          password: form.password,
+          email: form.email,
+          code: form.code,
+        });
+        // 假设后端返回 { success: true, message: "注册成功" }
+        if (res.success) {
+          ElMessage.success(res.message);
+          router.push('/');
+        } else {
+          ElMessage.warning(res.message);
+        }
+      } catch (error) {
+        console.error('注册失败:', error);
+        ElMessage.error('网络错误，请稍后重试');
+      }
+    } else {
+      ElMessage.warning('请完整填写信息');
+    }
+  });
+};
+const validateEmail = async () => {
+  // 前置校验：确保邮箱不为空且格式正确
+  if (!form.email) {
+    ElMessage.warning('请先输入邮箱地址');
+    return;
+  }
+  const emailReg = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailReg.test(form.email)) {
+    ElMessage.warning('请输入正确的邮箱格式');
+    return;
+  }
 
-const validateEmail = () => {
-  post("/vali-register-email",{
-    email: form.email
-  },(message)=>{
-    ElMessage.success(message)
-    coldTime.value = 60;
-    setInterval(()=>coldTime.value--,1000);
-  })
-}
+  try {
+    // 发送验证码请求，等待 Promise 结果
+    const res = await request.post("/vali-register-email", {
+      email: form.email
+    });
+
+    // 根据后端实际返回结构判断成功
+    // 假设后端返回 { success: true, message: "验证码已发送" }
+    if (res.success) {
+      ElMessage.success(res.message);
+      coldTime.value = 60;
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        coldTime.value--;
+        if (coldTime.value <= 0) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }, 1000);
+    } else {
+      // 如果后端返回失败信息
+      ElMessage.warning(res.message || '发送失败');
+    }
+  } catch (error) {
+    console.error('发送验证码失败:', error);
+    ElMessage.error('网络错误，请稍后重试');
+  }
+};
 
 const form = reactive({
   username: "",

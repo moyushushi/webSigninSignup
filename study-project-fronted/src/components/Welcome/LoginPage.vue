@@ -2,9 +2,9 @@
 import {User,Lock} from "@element-plus/icons-vue";
 import {reactive} from "vue";
 import {ElMessage} from "element-plus";
-import {get, post} from "@/net/index.js";
 import router from "@/router/index.js";
 import {useStore} from "@/stores/index.js";
+import request from "@/util/request.js";
 
 const form = reactive({
   username: '',
@@ -12,29 +12,40 @@ const form = reactive({
   remember: false,
 })
 const store=useStore()
-const login = ()=> {
-  if(!form.username||!form.password)
-    ElMessage.warning('请填写用户名或密码!')
-  else {
-    post("/login",{
+const login = async () => {
+  if (!form.username || !form.password) {
+    ElMessage.warning('请填写用户名或密码!');
+    return;
+  }
+
+  try {
+    const res = await request.post("/login", {
       username: form.username,
       password: form.password,
       remember: form.remember,
-    },(message)=>{
-      ElMessage.success(message);
-      get('user/me', (message) => {
-        store.auth.user=message
-        router.push('/index')
-      }, () => {
-        store.auth.user=null;
-        ElMessage.error('获取用户失败，请重新登录');
-        router.push('/login')
-      })
-    }), (error)=>{
-      ElMessage.error(error);
+    });
+    console.log('登录响应:', res);
+
+    if (res.success) {
+      ElMessage.success(res.message);
+      const userRes = await request.get('/user/me');
+      console.log('用户信息响应:', userRes);
+
+      if (userRes.success && userRes.data) {
+        store.auth.user = userRes.data;
+        await router.push('/index');
+      } else {
+        ElMessage.error('获取用户信息失败');
+        store.auth.user = null;
+      }
+    } else {
+      ElMessage.warning(res.message);
     }
+  } catch (err) {
+    console.error('登录失败:', err);
+    ElMessage.error('网络错误，请稍后重试');
   }
-}
+};
 </script>
 
 <template>

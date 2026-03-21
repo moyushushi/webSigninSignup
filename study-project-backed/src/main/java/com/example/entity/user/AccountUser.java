@@ -7,4 +7,6 @@ public class AccountUser {
     int id;
     String email;
     String username;
+    String password;
+
 }

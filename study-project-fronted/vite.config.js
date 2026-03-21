@@ -32,12 +32,13 @@ export default defineConfig({
         // 配置接口代理，解决跨域（前端请求 /api 转发到后端 8080）
         proxy: {
             '/api': {          // 前端请求前缀为 /api 的接口都转发到后端
-                target: 'http://localhost:8080', // 本地开发时的后端地址
+                target: 'http://java:8080', // 本地开发时的后端地址
                 changeOrigin: true, // 开启跨域代理
-                rewrite: (path) => path.replace(/^\/api/, ''), // 去掉 /api 前缀（根据后端实际路径调整）
+                //rewrite: (path) => path, // 去掉 /api 前缀（根据后端实际路径调整）
                 // 若后端是容器化部署，Docker 内需要用「容器名/网络别名」代替 localhost，参考第二步说明
                 // target: 'http://springboot-backend:8080',
             }
         }
-  }
+  },
+    base: './'
 })

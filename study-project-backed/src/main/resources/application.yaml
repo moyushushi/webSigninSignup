@@ -1,18 +1,67 @@
+server:
+  forward-headers-strategy: native
+  tomcat:
+    remote-ip:
+      remote-ip-header: X-forwarded-For
+      protocol-header: X-forwarded-Proto
+  port: 8080
+  servlet:
+    context-path: /api
+    session:
+      cookie:
+        http-only: true
+        secure: false       # HTTPS 必须设为 true
+        same-site: Lax    # 跨域域名需设为 None
+        max-age: 86400
+        name: JSESSIONID
+        path: /
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+logging:
+  level:
+    root: info # 全局默认info
+    com.example: debug # 自己的包开启debug，打印详细参数
+    org.springframework.web: debug # 可选：开启web层日志，查看请求映射
+    org.springframework.security: warn # security日志级别降低，避免刷屏
+    org.springframework.mail: debug # 可选：开启邮件日志，查看发送细节
+    redis.clients.jedis: debug # 可选：开启Redis日志，查看操作细节
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n" # 控制台日志格式
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+  file:
+    name: ./logs/study-project.log # 日志文件路径（可选，方便查看）
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://172.26.30.75:3306/backed?useUnicode=true&characterEncoding=utf-8
+    url: jdbc:mysql://mysql:3306/backed?useUnicode=true&characterEncoding=utf-8
     username: root
     password: 123456
   mail:
     host: smtp.163.com
     username: 13646854845@163.com
-    password: KMgajmi96YUfyB9P
-    port: 25
+    password: LTgD238mF5dgXWbC
+    port: 465
+    protocol: smtps
     properties:
-      form: 13646854845@163.com
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+
   data:
     redis:
       database: 0
-      host: localhost
+      host: redis
       port: 6379
+
+cors:
+    allowed-origins: http://121.43.242.87 # Nginx 域名/前端访问地址（生产替换为真实域名）
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: Content-Type,Authorization
+    expose-headers: Authorization
+    allow-credentials: true
+    max-age: 3600

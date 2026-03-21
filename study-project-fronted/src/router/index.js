@@ -2,7 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import {useStore} from "@/stores/index.js";
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
       {
           path: '/',
@@ -33,14 +33,21 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     const store = useStore()
-    if (store.auth.user!=null && to.path !== '/index'){
-        next('/index')
-    }else if(store.auth.user===null && to.fullPath.startsWith('/index')){
-        next('/')
-    }else if(to.matched.length===0){
-        next('/index')
-    }else
-        next()
+    // 白名单：无需登录即可访问的页面
+    const whiteList = ['/', '/register', '/forget']
+    if (store.auth.user) { // 已登录
+        if (whiteList.includes(to.path)) {
+            next('/index') // 已登录访问白名单页面，跳转到首页
+        } else {
+            next() // 已登录访问其他页面（如/index），正常放行
+        }
+    } else { // 未登录
+        if (whiteList.includes(to.path)) {
+            next() // 未登录访问白名单页面，正常放行
+        } else {
+            next('/') // 未登录访问非白名单页面（如/index），跳转到登录页
+        }
+    }
 })
 
 export default router
