@@ -1,16 +1,24 @@
 <script setup>
 import {ElMessage} from 'element-plus';
 import router from "@/router/index.js";
-import {get} from "@/net/index.js";
 import {useStore} from "@/stores/index.js";
+import request from "@/util/request.js";
 const store = useStore()
-const logout=() =>{
-  get("/my/logout",(message) =>{
-    ElMessage.success(message)
-    store.auth.user=null
+const logout = async () => {
+  try {
+    const res = await request.post('/my/logout');   // 改为 POST
+    if (res.success) {
+      ElMessage.success(res.message);
+    } else {
+      ElMessage.warning(res.message);
+    }
+  } catch (err) {
+    ElMessage.error('退出失败');
+  } finally {
+    store.auth.user = null;
     router.push('/');
-  })
-}
+  }
+};
 
 </script>
 

@@ -2,12 +2,14 @@
 
 import {EditPen, Lock, Message} from "@element-plus/icons-vue";
 import {reactive, ref} from "vue";
-import {post} from "@/net/index.js";
 import {ElMessage} from "element-plus";
 import router from "@/router/index.js";
+import request from "@/util/request.js";
 
+const active = ref(0);
+const coldTime = ref(0);      // 倒计时秒数，初始为0（表示未开始）
+let timer = null;
 
-const active = ref(0)
 
 const form = reactive({
   email: '',
@@ -51,7 +53,6 @@ const rules ={
 
 const isEmailValid = ref(false)
 const formRef = ref()
-const coldTime =ref(0)
 
 const onValidate= (prop,isValid) => {
   if (prop === 'email') {
@@ -59,46 +60,91 @@ const onValidate= (prop,isValid) => {
   }
 }
 
-const validateEmail = () => {
-  post("/vali-reset-email",{
-    email: form.email
-  },(message)=>{
-    ElMessage.success(message)
-    coldTime.value = 60;
-    setInterval(()=>coldTime.value--,1000);
-  })
-}
+const validateEmail = async () => {
+  // 前置校验：确保邮箱不为空且格式正确
+  if (!form.email) {
+    ElMessage.warning('请先输入邮箱地址');
+    return;
+  }
+  const emailReg = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailReg.test(form.email)) {
+    ElMessage.warning('请输入正确的邮箱格式');
+    return;
+  }
 
-const startReset = () => {
-  formRef.value.validate((isValid)=> {
-    if (isValid) {
-      post('/start-reset', {
-        email: form.email,
-        code: form.code
-      }, (message) => {
-        ElMessage.success(message)
-        active.value++
-      })
-    } else{
-      ElMessage.warning('请完整填写信息')
+  try {
+    const res = await request.post("/vali-reset-email", {
+      email: form.email
+    });
+    // 根据后端返回结构判断成功
+    if (res.success) {
+      ElMessage.success(res.message);
+      coldTime.value = 60;
+      // 正确实现倒计时（避免重复定时器）
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        coldTime.value--;
+        if (coldTime.value <= 0) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }, 1000);
+    } else {
+      ElMessage.warning(res.message);
     }
-  })
-}
+  } catch (error) {
+    console.error('发送验证码失败:', error);
+    ElMessage.error('网络错误，请稍后重试');
+  }
+};
+const startReset = async () => {
+  formRef.value.validate(async (isValid) => {
+    if (isValid) {
+      try {
+        const res = await request.post('/start-reset', {
+          email: form.email,
+          code: form.code
+        });
+        // 根据后端返回结构判断成功
+        if (res.success) {
+          ElMessage.success(res.message);
+          active.value++; // 切换到下一步
+        } else {
+          ElMessage.warning(res.message);
+        }
+      } catch (error) {
+        console.error('重置密码请求失败:', error);
+        ElMessage.error('网络错误，请稍后重试');
+      }
+    } else {
+      ElMessage.warning('请完整填写信息');
+    }
+  });
+};
 
-const doRester =()=>{
-  formRef.value.validate((isValid)=> {
+const doRester = async () => {
+  formRef.value.validate(async (isValid) => {
     if (isValid) {
-      post('/do-password', {
-        password: form.password
-      }, (message) => {
-        ElMessage.success(message)
-        active.value++
-      })
-    } else{
-      ElMessage.warning('请填写新密码')
+      try {
+        const res = await request.post('/do-password', {
+          password: form.password
+        });
+        // 根据后端返回结构判断成功
+        if (res.success) {
+          ElMessage.success(res.message);
+          active.value++; // 切换到下一步
+        } else {
+          ElMessage.warning(res.message);
+        }
+      } catch (error) {
+        console.error('重置密码失败:', error);
+        ElMessage.error('网络错误，请稍后重试');
+      }
+    } else {
+      ElMessage.warning('请填写新密码');
     }
-  })
-}
+  });
+};
 
 </script>
 
@@ -107,6 +153,7 @@ const doRester =()=>{
     <el-steps style="max-width: 600px" :active="active" finish-status="success" align-center>
       <el-step title="验证电子邮件" finish-status="success" />
       <el-step title="设定密码" finish-status="success" />
+      <el-step title="完成" finish-status="success" />
     </el-steps>
   </div>
   <div>
@@ -182,6 +229,19 @@ const doRester =()=>{
         <div style="margin-top: 20px ;font-size: 14px">
           <span style="font-size: 14px;line-height: 15px;color: gray">已有账号?</span>
           <el-link type="primary" style="translate: 0 -2px" @click="router.push('/')">立即登录</el-link>
+        </div>
+      </div>
+    </transition>
+    <transition name="el-fade-in-linear" mode="out-in">
+      <div style="text-align:center; margin: 0 20px" v-if="active===2">
+        <div style="margin-top: 150px;">
+          <div style="font-size: 25px;font-weight: bold">密码重置成功</div>
+          <div style="font-size: 14px;color: gray;margin-top: 20px">请使用新密码登录</div>
+        </div>
+        <div style="margin-top: 70px;">
+          <el-button @click="router.push('/')" type="primary" style="width: 270px; height: 50px; font-size: 18px" plain>
+            立即登录
+          </el-button>
         </div>
       </div>
     </transition>

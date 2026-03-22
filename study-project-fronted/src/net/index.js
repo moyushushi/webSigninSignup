@@ -7,7 +7,11 @@ const defaultFailure = (message) => ElMessage.warning(message)
 
 
 function post(url, data, success, failure = defaultFailure, error = defaultError){
-    axios.post(url, data, {
+    const params = new URLSearchParams();
+    for (let key in data) {
+        params.append(key, data[key]);
+    }
+    axios.post(url, params, {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -17,7 +21,7 @@ function post(url, data, success, failure = defaultFailure, error = defaultError
         success(data.message,data.status);
     else
         failure(data.message,data.status);
-    }).catch(error => failure(error));
+    }).catch(error => error(error));
 }
 function get(url,success, failure = defaultFailure, error = defaultError){
     axios.get(url, {
