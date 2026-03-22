@@ -11,7 +11,6 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,11 +21,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -92,7 +93,7 @@ public class SecurityConfiguration {
                         .logoutSuccessHandler(this::onLogoutSuccess)
                         .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
-                        .deleteCookies("web_test")
+                        .deleteCookies("JSESSIONID")
                     .permitAll())
                 .rememberMe(rememberMe->rememberMe
                         .rememberMeParameter("remember")
@@ -155,13 +156,18 @@ public class SecurityConfiguration {
     }
 
     private void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json");
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         AccountUser account = userDetails.getAccountUser();
-        HttpSession session = request.getSession();
+
+        // 设置 SecurityContext
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // 将 SecurityContext 保存到 session
+        HttpSession session = request.getSession(true);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
         session.setAttribute("account", account);
-        System.out.println("=== Authentication Success ===");
-        System.out.println("Session ID: " + session.getId());
-        System.out.println("Account set: " + account);
         response.getWriter().write(JSONObject.toJSONString(RestBean.success("登录成功")));
     }
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {

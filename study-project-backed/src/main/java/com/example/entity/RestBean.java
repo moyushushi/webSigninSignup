@@ -20,8 +20,16 @@ public class RestBean<T> {
         return new RestBean<>(200, true, null, null);
     }
 
+    public static <T> RestBean<T> success(String message) {
+        return new RestBean<>(200, true, message, null);
+    }
+
     public static <T> RestBean<T> success(T data) {
         return new RestBean<>(200, true, null, data);
+    }
+
+    public static <T> RestBean<T> success(String message, T data) {
+        return new RestBean<>(200, true, message, data);
     }
 
     public static <T> RestBean<T> failure(int status, String message) {

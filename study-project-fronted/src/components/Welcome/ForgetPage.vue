@@ -153,6 +153,7 @@ const doRester = async () => {
     <el-steps style="max-width: 600px" :active="active" finish-status="success" align-center>
       <el-step title="验证电子邮件" finish-status="success" />
       <el-step title="设定密码" finish-status="success" />
+      <el-step title="完成" finish-status="success" />
     </el-steps>
   </div>
   <div>
@@ -228,6 +229,19 @@ const doRester = async () => {
         <div style="margin-top: 20px ;font-size: 14px">
           <span style="font-size: 14px;line-height: 15px;color: gray">已有账号?</span>
           <el-link type="primary" style="translate: 0 -2px" @click="router.push('/')">立即登录</el-link>
+        </div>
+      </div>
+    </transition>
+    <transition name="el-fade-in-linear" mode="out-in">
+      <div style="text-align:center; margin: 0 20px" v-if="active===2">
+        <div style="margin-top: 150px;">
+          <div style="font-size: 25px;font-weight: bold">密码重置成功</div>
+          <div style="font-size: 14px;color: gray;margin-top: 20px">请使用新密码登录</div>
+        </div>
+        <div style="margin-top: 70px;">
+          <el-button @click="router.push('/')" type="primary" style="width: 270px; height: 50px; font-size: 18px" plain>
+            立即登录
+          </el-button>
         </div>
       </div>
     </transition>
